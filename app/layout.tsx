@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Lupi — Seu próximo começo",
-  description: "Projeto Lupi pronto para publicar na Vercel.",
+  title: "Lupita Shopee — Seu próximo presente",
+  description: "Escolha seu presente, finalize com Pix e acompanhe seu pedido.",
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
