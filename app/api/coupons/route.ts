@@ -1,0 +1,6 @@
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { coupons } from "@/lib/db/schema"
+import { eq, and } from "drizzle-orm"
+
+export async function POST(request: Request) { const { code, subtotal } = await request.json(); const normalized = String(code ?? "").trim().toUpperCase(); const amount = Number(subtotal); if (!normalized || !Number.isFinite(amount) || amount <= 0) return NextResponse.json({ error: "Cupom ou subtotal inválido" }, { status: 400 }); const [coupon] = await db.select().from(coupons).where(and(eq(coupons.code, normalized), eq(coupons.active, true))); if (!coupon) return NextResponse.json({ error: "Cupom inválido" }, { status: 404 }); const now = new Date(); if ((coupon.startsAt && coupon.startsAt > now) || (coupon.expiresAt && coupon.expiresAt < now) || (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) || amount < coupon.minOrder) return NextResponse.json({ error: "Cupom expirado, esgotado ou indisponível para este valor" }, { status: 422 }); const discount = coupon.discountType === "percent" ? Math.min(amount, Math.round(amount * coupon.discountValue / 100)) : Math.min(amount, coupon.discountValue); return NextResponse.json({ code: coupon.code, discount, total: amount - discount }) }
