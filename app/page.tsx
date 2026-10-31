@@ -9,15 +9,23 @@ const money = (cents:number) => new Intl.NumberFormat("pt-BR", { style:"currency
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
+  const [whatsappNumber, setWhatsappNumber] = useState("5500000000000")
   const [query, setQuery] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
   const filtered = useMemo(() => products.filter(p => `${p.name} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [products, query])
 
-  useEffect(() => { fetch("/api/products").then(r => r.ok ? r.json() : { products: [] }).then(data => setProducts(data.products ?? [])) }, [])
+  useEffect(() => {
+    Promise.all([fetch("/api/products"), fetch("/api/settings")]).then(async ([productsResponse, settingsResponse]) => {
+      const productsData = productsResponse.ok ? await productsResponse.json() : { products: [] }
+      const settingsData = settingsResponse.ok ? await settingsResponse.json() : {}
+      setProducts(productsData.products ?? [])
+      if (settingsData.whatsappNumber) setWhatsappNumber(settingsData.whatsappNumber.replace(/\D/g, ""))
+    })
+  }, [])
 
   const whatsapp = (product?: Product) => {
-    const text = product ? `Olá! Vim pelo catálogo da LUPITA SHOPEE e quero fazer um pedido.\n\nProduto: ${product.name}\nCategoria: ${product.categoryName ?? "Geral"}\nQuantidade: 1\nMeu @ no jogo:\nCupom utilizado: nenhum\nValor do pedido: ${money(product.promotionalPrice ?? product.price)}\nComprovante do pagamento: vou enviar na conversa.` : "Olá! Vim pelo catálogo da LUPITA SHOPEE e quero fazer um pedido." 
-    window.open(`https://wa.me/5500000000000?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
+    const text = `Olá! Vim pelo catálogo da LUPITA SHOPEE e quero fazer um pedido.\n\nProduto: ${product?.name ?? ""}\nCategoria: ${product?.categoryName ?? ""}\nQuantidade: 1\n\nMeu @ no jogo: \nComprovante do pagamento: vou enviar na conversa`
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
   }
 
   return <main className="storefront">

@@ -4,4 +4,6 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { shopSettings } from "@/lib/db/schema"
 
+export async function GET() { const [settings] = await db.select({ storeName: shopSettings.storeName, description: shopSettings.description, whatsappNumber: shopSettings.whatsappNumber, whatsappMessage: shopSettings.whatsappMessage }).from(shopSettings).limit(1); return NextResponse.json(settings ?? { whatsappNumber: "5500000000000" }) }
+
 export async function PATCH(request: Request) { const session = await auth.api.getSession({ headers: await headers() }); if (!session?.user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 }); const body = await request.json(); const [settings] = await db.insert(shopSettings).values({ id: 1, storeName: String(body.storeName ?? "LUPITA SHOPEE"), description: String(body.description ?? ""), whatsappNumber: String(body.whatsappNumber ?? ""), whatsappMessage: String(body.whatsappMessage ?? "") }).onConflictDoUpdate({ target: shopSettings.id, set: { storeName: String(body.storeName ?? "LUPITA SHOPEE"), description: String(body.description ?? ""), whatsappNumber: String(body.whatsappNumber ?? ""), whatsappMessage: String(body.whatsappMessage ?? ""), updatedAt: new Date() } }).returning(); return NextResponse.json(settings) }
